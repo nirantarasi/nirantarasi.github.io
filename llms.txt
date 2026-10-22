@@ -1,98 +1,43 @@
 # Nirantara
 
-> The Modern Task Runner
+> Cloud-native platforms, built in the open
 
-A fast, cross-platform build tool inspired by Make, designed for modern workflows.
+Declarative Kubernetes lifecycle, read-only database MCP servers, and a Kubernetes operator for AI infrastructure.
 
 ## Table of Contents
 
 ### Documentation
 
-- [Documentation](/docs.md): Task is a task runner and build tool that aims to be simpler and easier to use than GNU Make. Start here to install it, learn it, or look something up.
-- [Guide](/docs/guide.md): Learn to define tasks, supply inputs, control execution, configure the environment and output, and include other Taskfiles.
+- [Documentation](/docs.md): Documentation for Nirantara's open-source projects: k3sctl, mssql-mcp-go, postgres-mcp-go, and omniroute-operator.
 
-#### Getting Started
+#### k3sctl
 
-- [Installation](/docs/installation.md): Installation methods for Task
-- [Quick Start](/docs/getting-started.md): Guide for getting started with Task
-- [Integrations](/docs/integrations.md): Official and community integrations for Task, including VS Code, JSON schemas, and other tools
+- [k3sctl](/docs/k3sctl.md): Declarative lifecycle management for K3s clusters over SSH — install, upgrade, reconfigure, back up, and reset from one YAML file.
+- [Installation](/docs/k3sctl/installation.md): Install k3sctl from a release binary, with Go, or build it from source.
+- [Configuration](/docs/k3sctl/configuration.md): The k3sctl Cluster file — hosts, roles, SSH access, K3s settings, drain options, and additional manifests.
+- [Commands](/docs/k3sctl/commands.md): The k3sctl CLI — apply, reset, kubeconfig, backup, config, init, and more.
 
-#### Guide
+#### mssql-mcp-go
 
-##### Writing and running tasks
+- [mssql-mcp-go](/docs/mssql-mcp-go.md): A read-only Model Context Protocol server for Microsoft SQL Server, written in Go, with 70+ tools for schema, data, performance, security, and migration analysis.
+- [Installation](/docs/mssql-mcp-go/installation.md): Install mssql-mcp-go with Homebrew, a release binary, Docker, or from source.
+- [Configuration](/docs/mssql-mcp-go/configuration.md): Configure mssql-mcp-go with config.yaml or environment variables, and connect it to Claude Desktop, Cline, or Docker.
+- [Tools](/docs/mssql-mcp-go/tools.md): All tools exposed by mssql-mcp-go, grouped by what they help you do.
 
-- [Defining tasks](/docs/guide/defining-tasks.md): Task syntax shortcuts, internal tasks, aliases, the directory a task runs in, and the help text Task shows for it.
-- [Running tasks](/docs/guide/running-tasks.md): How Task finds a Taskfile, and how to run one from a subdirectory, from your home directory, from standard input or as a dry run.
+#### postgres-mcp-go
 
-##### Variables and arguments
+- [postgres-mcp-go](/docs/postgres-mcp-go.md): A read-only Model Context Protocol server for PostgreSQL, written in Go, with 70+ tools for schema, data, performance, security, and migration analysis.
+- [Installation](/docs/postgres-mcp-go/installation.md): Install postgres-mcp-go with Homebrew, a release binary, Docker, or from source.
+- [Configuration](/docs/postgres-mcp-go/configuration.md): Configure postgres-mcp-go with config.yaml or environment variables, and connect it to Claude Desktop, Cline, or Docker.
+- [Tools](/docs/postgres-mcp-go/tools.md): All tools exposed by postgres-mcp-go, grouped by what they help you do.
 
-- [Variables](/docs/guide/variables.md): Declare variables, compute values with shell commands, preserve types with references, and understand resolution order.
-- [Command-line arguments](/docs/guide/arguments.md): Supply variables with NAME=value, forward arguments after --, and capture values with wildcard task names.
-- [Validation and prompts](/docs/guide/required-variables.md): Require variables to be set, restrict them to allowed values, and prompt for missing input.
-- [Secret variables](/docs/guide/secret-variables.md): Mask sensitive variable values in Task's command logs, load secrets from external sources, and understand what masking does not protect.
+#### omniroute-operator
 
-##### Task execution
-
-- [Dependencies and task calls](/docs/guide/dependencies.md): Run checks before a build, put tasks in order, pass variables, and control repeated calls and cleanup.
-- [Loops](/docs/guide/loops.md): Repeat a command over a static list, a matrix, a variable, your task's sources, or other tasks.
-- [Conditional execution](/docs/guide/conditional-execution.md): Skip optional work with if, enforce requirements with preconditions, and ask for confirmation before execution with prompt.
-- [Errors and cleanup](/docs/guide/errors-and-cleanup.md): Continue after selected command failures with ignore_error, schedule cleanup with defer, and inspect a failed command's exit code.
-- [Up-to-date checks](/docs/guide/up-to-date.md): Skip unchanged builds, check whether work is already done, and choose between source fingerprints and status commands.
-- [Watch mode](/docs/guide/watch.md): Re-run a task automatically whenever its sources change.
-
-##### Environment and output
-
-- [Environment variables](/docs/guide/environment.md): Set environment variables on a single task or on every task, and load them from `.env` files.
-- [Platforms and shells](/docs/guide/platforms.md): Restrict tasks and commands to an operating system or architecture, and set shell options with `set` and `shopt`.
-- [Output and logging](/docs/guide/output.md): Choose an output mode, hide command echoes, and display colors and failure annotations in CI.
-
-##### Including Taskfiles
-
-- [Including Taskfiles](/docs/guide/includes.md): Reuse tasks across projects with `includes`, covering namespaces, optional and internal includes, flattening, and per-include variables.
-- [Remote Taskfiles](/docs/remote-taskfiles.md): Guide to loading and securely using Taskfiles from HTTP and Git sources
-
-#### Reference
-
-- [Taskfile Schema Reference](/docs/reference/schema.md): A reference for the Taskfile schema
-- [Command Line Interface Reference](/docs/reference/cli.md): Complete reference for Task CLI commands, flags, and exit codes
-- [Templating Reference](/docs/reference/templating.md): Comprehensive guide to Task's templating system with Go text/template, special variables, and available functions
-- [Environment Reference](/docs/reference/environment.md): A reference for the Taskfile environment variables
-- [Configuration Reference](/docs/reference/config.md): Complete reference for the Task config files and env vars
-- [Package API Reference](/docs/reference/package.md): A reference for Task's Golang package API
-
-#### Project
-
-- [Changelog](/docs/changelog.md): Release history for Task, including new features, improvements, fixes, and breaking changes
-- [FAQ](/docs/faq.md): Frequently asked questions about Task, including ETAs, shell limitations, and Windows compatibility
-- [Taskfile Versions](/docs/taskfile-versions.md): How to use the Taskfile schema version to ensure users are using the correct versions of Task
-- [Community](/docs/community.md): Task community contributions, installation methods, and integrations maintained by third parties
-- [Experiments](/docs/experiments.md): Guide to Task’s experimental features and how to use them
-- [Deprecations](/docs/deprecations.md): Guide to deprecated features in Task and how to migrate to the new alternatives
-- [Security](/docs/security.md): How to report Task security vulnerabilities and how the project responds to them
-
-##### Experiments
-
-- [Env Precedence (#1038)](/docs/experiments/env-precedence.md): Experiment to change the precedence of environment variables in Task
-- [Gentle Force (#1200)](/docs/experiments/gentle-force.md): Experiment to modify the behavior of the --force flag in Task
-- [Remote Taskfiles (#1317)](/docs/experiments/remote-taskfiles.md): Experimentation for using Taskfiles stored in remote locations
-
-##### Deprecations
-
-- [Completion Scripts](/docs/deprecations/completion-scripts.md): Deprecation of direct completion scripts in Task’s Git directory
-- [Template Functions](/docs/deprecations/template-functions.md): Deprecation of some templating functions in Task, with guidance on their replacements.
-- [Version 2 Schema (#1197)](/docs/deprecations/version-2-schema.md): Deprecation of Taskfile schema version 2 and migration to version 3
-
-##### Security
-
-- [Incident Response Plan](/docs/security/incident-response-plan.md): Task's process for detecting, triaging, mitigating, and disclosing security incidents
-- [Threat Model](/docs/security/threat-model.md): Threats, assets, trust boundaries, and mitigations for the Task project and its release infrastructure
-
-#### Contributing
-
-- [Contributing](/docs/contributing.md): Comprehensive guide for contributing to the Task project, including setup, development, testing, and submitting PRs
-- [Style Guide](/docs/styleguide.md): Official style guide for Taskfile.yml files with best practices and recommended conventions
-- [Releasing](/docs/releasing.md): Task release process including GoReleaser, Homebrew, npm, Snapcraft, winget, and other package managers
+- [omniroute-operator](/docs/omniroute-operator.md): A Kubebuilder operator that deploys and manages OmniRoute — the unified AI proxy/router — on self-hosted Kubernetes.
+- [Installation](/docs/omniroute-operator/installation.md): Install the omniroute-operator with Helm, then deploy an OmniRoute instance.
+- [OmniRoute CR](/docs/omniroute-operator/omniroute-cr.md): Reference for the gateway.omniroute.ai/v1alpha1 OmniRoute custom resource.
+- [Local development](/docs/omniroute-operator/local-development.md): Run the omniroute-operator against a local k3d cluster, build images, and run the controller outside Kubernetes.
 
 ### Other
 
-- [Task documentation for coding agents](/agents.md): A compact map of Task's documentation, plus the execution semantics that are easiest to get wrong when generating a Taskfile.
+- [Documentation for coding agents](/agents.md): A compact map of Nirantara's documentation, plus the details that are easiest to get wrong when generating configuration for k3sctl, the MCP servers, or the omniroute-operator.

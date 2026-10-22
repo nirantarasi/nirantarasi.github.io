@@ -1,76 +1,102 @@
 ---
 url: /agents.md
 description: >-
-  A compact map of Task's documentation, plus the execution semantics that are
-  easiest to get wrong when generating a Taskfile.
+  A compact map of Nirantara's documentation, plus the details that are easiest
+  to get wrong when generating configuration for k3sctl, the MCP servers, or the
+  omniroute-operator.
 ---
 
-# Task documentation for coding agents
+# Documentation for coding agents
 
-Task is a cross-platform task runner and build tool. Its configuration file is
-normally named `Taskfile.yml`, and new files should use schema version `3`.
-
-Every page linked below is also available as raw Markdown: append `.md` to its
-URL. The curated index is at [/llms.txt](/llms.txt) and the full corpus at
-[/llms-full.txt](/llms-full.txt).
+Nirantara maintains four open-source projects. The documentation below is
+organised per project, and every page is also available as raw Markdown by
+appending `.md` to its URL. The curated index is at [/llms.txt](/llms.txt) and
+the full corpus at [/llms-full.txt](/llms-full.txt).
 
 ## Where to look
 
-* [Quick Start](./docs/getting-started.md): the shape of a Taskfile.
-* [Taskfile Schema](./docs/reference/schema.md): the source of truth for keys,
-  types and accepted values. Check here before assuming a field exists.
-* [CLI](./docs/reference/cli.md): commands, flags and exit codes.
-* [Templating](./docs/reference/templating.md): every template function and
-  special variable. Check here before inventing one.
-* [Guide](./docs/guide/): task definitions, inputs, execution and shared
-  Taskfiles.
-* [Errors and cleanup](./docs/guide/errors-and-cleanup.md): failure handling and
-  `defer`.
-* [Secret variables](./docs/guide/secret-variables.md): masking and its limits.
-* [Resolution order](./docs/guide/variables.md#resolution-order) and
-  [Task dependencies](./docs/guide/dependencies.md#task-dependencies): for when
-  the behaviour matters more than the procedure.
+### k3sctl
 
-## Semantics that are easy to get wrong
+Declarative K3s cluster lifecycle over SSH.
 
-1. `vars` are not exported to `cmds`: use templates to read them there. Dynamic
-   variables (`sh:`) also receive previously resolved scalar variables in their
-   shell environment. `env` is exported to commands. Root-level `env` also
-   participates in templates; task-level `env` does not. A template keeps any
-   value resolved from other sources, or renders empty if none exists.
-2. A constant in a task's own `vars:` overrides the command line. Put the
-   default in global `vars:`, or use a template such as
-   `NAME: '{{.NAME | default "World"}}'` to preserve caller
-   input.
-3. The included Taskfile's own `vars:` are applied after `includes.vars`. A
-   constant overrides the include's value; a self-referencing template with
-   `default` can preserve it.
-4. Everything in `deps` may run concurrently and in any order. A `task:`
-   reference inside `cmds` runs at its position and blocks the next command. If
-   order matters, use `cmds`.
-5. Each command runs in its own shell. Nothing carries over between them, not
-   `cd` and not an exported variable. Use Task's `dir:` and `env:` instead.
-6. A template renders text. Use `ref:` to pass an array or a map without
-   flattening it to a string.
-7. A passing `status:` means the task is already up to date and is skipped. A
-   failing `preconditions:` means the task must not run at all. They are not
-   interchangeable.
-8. `defer:` commands run in reverse order of declaration, and run whether the
-   task succeeded or failed.
-9. Remote Taskfiles execute code from wherever they are fetched. See
-   [Remote Taskfiles](./docs/remote-taskfiles.md) for the trust and checksum
-   rules.
-10. Portability is about every command inside a task, not just Task itself. A
-    task is only cross-platform if its commands are.
+* [Overview](./docs/k3sctl/index.md)
+* [Installation](./docs/k3sctl/installation.md)
+* [Configuration](./docs/k3sctl/configuration.md): the `Cluster` file, hosts,
+  K3s settings, and drain options.
+* [Commands](./docs/k3sctl/commands.md): `apply`, `reset`, `kubeconfig`,
+  `backup`, and the flags each accepts.
 
-## Before writing a Taskfile
+### mssql-mcp-go
 
-* Confirm the feature exists in the schema for the version in use.
-* Prefer plain, readable tasks over dense templating.
-* Use `deps` only where concurrent execution is actually correct.
-* Never embed credentials. Read them from the environment or a secret manager.
-  `secret: true` masks a value in Task's own logs, but it only works on `vars:`,
-  not on `env:`, and it never masks what a command itself prints. Treat it as
-  one less place a secret is echoed, not as protection.
-* Give tasks a `desc:` so they show up in `task --list`, and validate inputs
-  with `requires:` or `preconditions:`.
+Read-only MCP server for Microsoft SQL Server.
+
+* [Overview](./docs/mssql-mcp-go/index.md)
+* [Installation](./docs/mssql-mcp-go/installation.md)
+* [Configuration](./docs/mssql-mcp-go/configuration.md): `config.yaml`,
+  `SQLSERVER_*` variables, and client snippets.
+* [Tools](./docs/mssql-mcp-go/tools.md)
+
+### postgres-mcp-go
+
+Read-only MCP server for PostgreSQL.
+
+* [Overview](./docs/postgres-mcp-go/index.md)
+* [Installation](./docs/postgres-mcp-go/installation.md)
+* [Configuration](./docs/postgres-mcp-go/configuration.md): `config.yaml`,
+  `POSTGRES_*` variables, and client snippets.
+* [Tools](./docs/postgres-mcp-go/tools.md)
+
+### omniroute-operator
+
+Kubernetes operator for OmniRoute.
+
+* [Overview](./docs/omniroute-operator/index.md)
+* [Installation](./docs/omniroute-operator/installation.md)
+* [OmniRoute CR](./docs/omniroute-operator/omniroute-cr.md): every field in
+  `gateway.omniroute.ai/v1alpha1`.
+* [Local development](./docs/omniroute-operator/local-development.md)
+
+## Details that are easy to get wrong
+
+### k3sctl
+
+1. Hosts must be Linux. `k3sctl` installs K3s and systemd units over SSH.
+2. The configuration is `apiVersion: k3sctl.k3sproject.io/v1beta1`,
+   `kind: Cluster`.
+3. `spec.hosts[]` entries choose a `role` of `server` or `agent`. Servers are
+   the default.
+4. Extra YAML documents in the same file are applied after installation with
+   `kubectl apply`. Separate them with `---`, and make each one a valid
+   Kubernetes manifest.
+5. `apply` is idempotent and only changes what drifted. `--dry-run` shows the
+   plan without changing the cluster.
+6. `reset` removes K3s from the hosts. It is not the same as deleting a
+   namespace.
+
+### MCP servers
+
+1. Both servers are read-only. Mutating SQL is rejected before execution, and
+   stored procedures are analysed, never run.
+2. Environment variables override `config.yaml`; never assume the file wins.
+3. The default transport is `stdio`, so an MCP client launches the binary rather
+   than connecting to a port.
+4. `mssql-mcp-go` uses `SQLSERVER_*` variables and `encrypt`/`ssl` options that
+   are SQL Server specific. `postgres-mcp-go` uses `POSTGRES_*` variables and
+   `ssl_mode` plus `search_path`.
+5. The tool names and groups are the same across both servers, but the SQL
+   dialect differs. Do not copy a T-SQL snippet into a PostgreSQL answer.
+
+### omniroute-operator
+
+1. The group and version are `gateway.omniroute.ai/v1alpha1`; the kind is
+   `OmniRoute`.
+2. `spec.replicas` is effectively capped at `1` because OmniRoute stores state
+   in SQLite with a single writer.
+3. Credentials come from an existing Secret with `JWT_SECRET`,
+   `API_KEY_SECRET`, and `INITIAL_PASSWORD`.
+4. `spec.ingress.enabled` defaults to `false`. Enable it explicitly and set
+   `className`, `host`, and TLS if the instance must be public.
+5. `spec.persistence.enabled` creates a PVC. Disabling it makes the instance
+   ephemeral.
+6. `NODE_OPTIONS` is derived from the memory limit; do not hardcode it in
+   `spec.env` unless you need to override the derived value.

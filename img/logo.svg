@@ -1,1 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 375 375"><path fill="#6d28d9" d="M 187.570312 190.933594 L 187.570312 375 L 30.070312 279.535156 L 30.070312 95.464844 Z"/><path fill="#8b5cf6" d="M 187.570312 190.933594 L 187.570312 375 L 345.070312 279.535156 L 345.070312 95.464844 Z"/><path fill="#c4b5fd" d="M 187.570312 190.933594 L 30.070312 95.464844 L 187.570312 0 L 345.070312 95.464844 Z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Nirantara">
+  <defs>
+    <linearGradient id="nirantara" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#6d28d9"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#nirantara)"/>
+  <path d="M19 46V18l26 28V18" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

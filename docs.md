@@ -1,52 +1,55 @@
 ---
 url: /docs.md
 description: >-
-  Task is a task runner and build tool that aims to be simpler and easier to use
-  than GNU Make. Start here to install it, learn it, or look something up.
+  Documentation for Nirantara's open-source projects: k3sctl, mssql-mcp-go,
+  postgres-mcp-go, and omniroute-operator.
 ---
 
 # Documentation
 
-Install Task, learn the basics, or look up syntax for your `Taskfile.yml`.
+Nirantara builds cloud-native platforms, Kubernetes operators, and AI
+infrastructure. This site documents the four projects that make up the platform
+today.
 
-## Start with Task {#new-to-task}
+## k3sctl {#k3sctl}
 
-Install Task and run your first Taskfile.
+Declarative lifecycle management for K3s clusters over SSH.
 
-* [Installation](./installation.md)
-* [Quick Start](./getting-started.md)
+* [Overview](./k3sctl/)
+* [Installation](./k3sctl/installation.md)
+* [Configuration](./k3sctl/configuration.md)
+* [Commands](./k3sctl/commands.md)
 
-## Use Task {#using-task}
+## mssql-mcp-go {#mssql-mcp-go}
 
-Find a guide for your everyday workflows.
+A read-only Model Context Protocol server for Microsoft SQL Server.
 
-* [Browse the guide](./guide/index.md)
-* [Variables](./guide/variables.md)
-* [Dependencies and task calls](./guide/dependencies.md)
+* [Overview](./mssql-mcp-go/)
+* [Installation](./mssql-mcp-go/installation.md)
+* [Configuration](./mssql-mcp-go/configuration.md)
+* [Tools](./mssql-mcp-go/tools.md)
 
-## Reference {#looking-something-up}
+## postgres-mcp-go {#postgres-mcp-go}
 
-Look up syntax, flags and functions.
+A read-only Model Context Protocol server for PostgreSQL.
 
-* [Taskfile Schema](./reference/schema.md)
-* [CLI](./reference/cli.md)
-* [Templating](./reference/templating.md)
+* [Overview](./postgres-mcp-go/)
+* [Installation](./postgres-mcp-go/installation.md)
+* [Configuration](./postgres-mcp-go/configuration.md)
+* [Tools](./postgres-mcp-go/tools.md)
 
-For settings outside the Taskfile, see [Configuration](./reference/config.md)
-and [Environment](./reference/environment.md).
+## omniroute-operator {#omniroute-operator}
 
-## Keeping up
+A Kubernetes operator for OmniRoute, the unified AI proxy/router.
 
-* [Changelog](./changelog.md): what shipped, and when.
-* [Experiments](./experiments/index.md) and
-  [Deprecations](./deprecations/index.md): what is coming, and what is going
-  away.
-* [FAQ](./faq.md): the questions that come up most often.
-* [Community](./community.md): integrations and tools built by other people.
+* [Overview](./omniroute-operator/)
+* [Installation](./omniroute-operator/installation.md)
+* [OmniRoute CR](./omniroute-operator/omniroute-cr.md)
+* [Local development](./omniroute-operator/local-development.md)
 
 ## Using an AI coding assistant
 
-[Task documentation for coding agents](../agents.md) is a compact map of these
-pages plus the semantics that are easiest to get wrong. Every page is also
-available as raw Markdown by appending `.md` to its URL, and the whole corpus is
-at [/llms.txt](/llms.txt).
+[Documentation for coding agents](../agents.md) is a compact map of every page,
+plus the details that are easiest to get wrong when generating configuration.
+Every page is also available as raw Markdown by appending `.md` to its URL, and
+the whole corpus is at [/llms.txt](/llms.txt).
