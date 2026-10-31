@@ -24,7 +24,7 @@ Declarative K3s cluster lifecycle over SSH.
 * [Configuration](./docs/k3sctl/configuration.md): the `Cluster` file, hosts,
   K3s settings, and drain options.
 * [Commands](./docs/k3sctl/commands.md): `apply`, `reset`, `kubeconfig`,
-  `backup`, and the flags each accepts.
+  `restore`, `config diff`, `config validate`, and the flags each accepts.
 
 ### mssql-mcp-go
 

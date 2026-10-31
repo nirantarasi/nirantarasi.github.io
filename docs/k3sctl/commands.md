@@ -1,6 +1,6 @@
 ---
 url: /docs/k3sctl/commands.md
-description: The k3sctl CLI — apply, reset, kubeconfig, backup, config, init, and more.
+description: The k3sctl CLI — apply, reset, kubeconfig, restore, config, init, and more.
 ---
 
 # Commands
@@ -10,9 +10,9 @@ description: The k3sctl CLI — apply, reset, kubeconfig, backup, config, init, 
 | `k3sctl apply` | Install or update the cluster |
 | `k3sctl reset` | Remove K3s from the hosts |
 | `k3sctl kubeconfig` | Print the admin kubeconfig |
-| `k3sctl backup` | Create an etcd snapshot |
-| `k3sctl config edit` | Edit the cluster configuration |
-| `k3sctl config status` | Show the current cluster status |
+| `k3sctl restore` | Restore the cluster from an etcd snapshot |
+| `k3sctl config diff` | Show differences between desired config and actual cluster state |
+| `k3sctl config validate` | Validate a cluster configuration file |
 | `k3sctl init` | Print a configuration template |
 | `k3sctl version` | Print version information |
 | `k3sctl completion` | Print a shell completion script |
@@ -41,9 +41,48 @@ k3sctl apply --config k3sctl.yaml
 | `--no-drain` | Skip node draining during the operation |
 | `--restore-from` | Restore an etcd snapshot before applying |
 | `--kubeconfig-out` | Write the admin kubeconfig to a file |
+| `--kubeconfig-api-address` | Override the API address in the kubeconfig |
+| `--kubeconfig-user` | Override the user in the kubeconfig |
+| `--kubeconfig-cluster` | Override the cluster name in the kubeconfig |
 | `--concurrency` | Number of hosts to operate on concurrently |
 | `--concurrent-uploads` | Number of concurrent file uploads |
 | `--disable-downgrade-check` | Allow installing an older K3s version |
+| `--force` | Skip confirmation prompts |
+
+## restore
+
+`restore` stops K3s, resets etcd state, and restores the cluster from a
+snapshot. It prompts for confirmation unless `--force` is given.
+
+```sh
+k3sctl restore --config k3sctl.yaml --from /path/to/snapshot.db
+```
+
+| Flag | Description |
+|---|---|
+| `--from` / `-f` | Path to the etcd snapshot to restore from (required) |
+| `--force` | Skip the confirmation prompt |
+
+## config
+
+`config` groups configuration-only commands that do not change the cluster.
+
+### diff
+
+Preview what `apply` would change by comparing the desired configuration with
+the actual cluster state.
+
+```sh
+k3sctl config diff --config k3sctl.yaml
+```
+
+### validate
+
+Validate a configuration file without connecting to any host.
+
+```sh
+k3sctl config validate --config k3sctl.yaml
+```
 
 ## Common workflows
 
@@ -56,28 +95,23 @@ export KUBECONFIG="$PWD/kubeconfig.yaml"
 kubectl get nodes
 ```
 
-### Check before applying
+### Validate and preview before applying
 
 ```sh
+k3sctl config validate --config k3sctl.yaml
+k3sctl config diff --config k3sctl.yaml
 k3sctl apply --config k3sctl.yaml --dry-run
 ```
 
-### Back up and restore etcd
+### Restore etcd
 
 ```sh
-# Create a snapshot on the server
-k3sctl backup --config k3sctl.yaml
-
-# Restore from a snapshot while applying
-k3sctl apply --config k3sctl.yaml --restore-from /path/to/snapshot.db
+# Restore from a snapshot on the server
+k3sctl restore --config k3sctl.yaml --from /path/to/snapshot.db
 ```
 
-### Inspect and edit configuration
-
-```sh
-k3sctl config status
-k3sctl config edit
-```
+Snapshots are scheduled with the `etcdSnapshots` configuration block; see
+[Configuration](./configuration.md) for scheduling, S3 upload, and pruning.
 
 ### Generate a starter file
 
@@ -96,4 +130,5 @@ k3sctl reset --config k3sctl.yaml
 ```sh
 k3sctl version
 k3sctl completion bash
+k3sctl completion zsh
 ```

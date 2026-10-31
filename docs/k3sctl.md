@@ -29,10 +29,21 @@ k3sctl kubeconfig > kubeconfig.yaml
 * Supports labels, taints, extra install flags, environment variables, and
   arbitrary file uploads.
 * Applies additional Kubernetes manifests bundled in the configuration file.
-* Creates etcd snapshots and restores them, with etcd member validation.
+* Automated etcd snapshots with S3 upload, retention, and pruning, plus etcd
+  member validation and restore from a snapshot.
 * Fetches a ready-to-use admin kubeconfig.
 * Idempotent `apply`: safe to re-run, and only changes what drifted.
+* Rolling upgrades with drain and cordon for both servers and agents.
+* Configuration validation (`config validate`) and diff (`config diff`).
+* Air-gap install: upload pre-downloaded image bundles for offline clusters.
 * Dry-run mode with `--dry-run`.
+* Private registry mirrors and authentication (`registries`).
+* Secrets encryption at rest with key rotation and re-encryption
+  (`secretsEncrypt`).
+* Certificate Authority rotation (`certRotate.rotateCA`).
+* Cluster join token rotation (`token.rotate`).
+* Post-apply cluster health verification (`healthCheck`).
+* Pre-flight checks for cgroups, kernel modules, ports, and disk (`preflight`).
 
 ::: warning
 Linux hosts only. `k3sctl` drives the cluster over SSH, so each host must be
