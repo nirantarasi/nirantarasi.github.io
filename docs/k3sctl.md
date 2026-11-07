@@ -61,8 +61,24 @@ k3sctl kubeconfig > kubeconfig.yaml
 * Typed component arguments: pass arguments directly to kube-apiserver,
   kube-controller-manager, kubelet, kube-proxy, etcd, and others
   (`componentArgs`).
-* Container runtime: system default registry, pause image, snapshotter, and
-  default runtime override (`runtime`).
+* Container runtime: system default registry, pause image, snapshotter,
+  default runtime override, and custom resolv.conf (`runtime`).
+* Embedded container registry: enable the K3s built-in Spegel distributed
+  registry (`embeddedRegistry`).
+* Image credential provider: external kubelet credential plugin for pulling
+  images from private registries (`imageCredentialProvider`).
+* Per-host node networking: external IPs, internal/external DNS names for
+  multi-homed and cloud nodes (`nodeExternalIP`, `nodeInternalDNS`,
+  `nodeExternalDNS`).
+* Local storage: custom path for the built-in local-path provisioner
+  (`localStorage`).
+* Advanced etcd tuning: expose metrics, disable automatic snapshots, snapshot
+  naming, and reconcile interval (`etcdAdvanced`).
+* Advanced flannel options: interface selection, custom flannel and CNI
+  configuration file paths (`network.flannelIface`, `flannelConf`,
+  `flannelCNIConf`).
+* Advanced S3 snapshot storage: session tokens, bucket lookup type, proxy,
+  config secret, timeout, and per-S3 retention (`etcdSnapshots.s3`).
 
 ::: warning
 Linux hosts only. `k3sctl` drives the cluster over SSH, so each host must be

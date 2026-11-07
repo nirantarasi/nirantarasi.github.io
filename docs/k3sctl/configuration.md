@@ -2,7 +2,8 @@
 url: /docs/k3sctl/configuration.md
 description: >-
   The k3sctl Cluster file — hosts, roles, SSH access, K3s settings, networking,
-  security, TLS, datastore, component args, runtime, etcd snapshots, registries,
+  security, TLS, datastore, component args, runtime, embedded registry, image
+  credential providers, local storage, etcd snapshots and tuning, registries,
   health checks, and additional manifests.
 ---
 
@@ -50,6 +51,12 @@ spec:
         user: root
         port: 22
         keyPath: ~/.ssh/id_ed25519
+      nodeExternalIP:                    # per-host external IPs
+        - 203.0.113.10
+      nodeInternalDNS:                   # per-host internal DNS names
+        - agent1.internal.example.com
+      nodeExternalDNS:                   # per-host external DNS names
+        - agent1.example.com
 
   k3s:
     version: v1.30.0+k3s1
@@ -74,6 +81,12 @@ spec:
         folder: snapshots
         accessKey: AKIAIOSFODNN7EXAMPLE
         secretKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+        sessionToken: FwoGZXIv...          # STS session token
+        bucketLookupType: auto             # auto, dns, or path
+        proxy: http://proxy.example.com:8080
+        configSecret: my-s3-secret
+        timeout: 30s
+        retention: 10                      # per-S3 retention override
       prune:                           # prune old snapshots on apply
         enabled: true
         retention: 10
@@ -135,6 +148,9 @@ spec:
       flannelBackend: vxlan             # none, vxlan, host-gw, wireguard-native
       flannelIPv6Masq: false
       flannelExternalIP: false
+      flannelIface: eth1                # network interface for flannel
+      flannelConf: /etc/flannel.json    # custom flannel config file
+      flannelCNIConf: /etc/cni/net.d/10-flannel.conflist
       egressSelectorMode: agent         # agent, cluster, pod, disabled
       serviceLBNamespace: kube-system
 
@@ -196,6 +212,23 @@ spec:
       pauseImage: registry.example.com/pause:3.9
       snapshotter: stargz
       defaultRuntime: nvidia
+      resolvConf: /etc/k3s-resolv.conf  # custom resolv.conf for containers
+
+    embeddedRegistry:                  # built-in Spegel distributed registry
+      enabled: true
+
+    imageCredentialProvider:           # kubelet image credential provider
+      binDir: /var/lib/rancher/credentialprovider/bin
+      config: /var/lib/rancher/credentialprovider/config.yaml
+
+    localStorage:                      # local-path provisioner settings
+      path: /opt/local-path-provisioner
+
+    etcdAdvanced:                      # advanced etcd tuning
+      exposeMetrics: true
+      disableSnapshots: false
+      snapshotName: my-cluster
+      snapshotReconcileInterval: 5m
 
   options:
     drain:
@@ -231,6 +264,9 @@ spec:
 | `dataDir` | Overrides the K3s data directory |
 | `uploadBinary` | Upload a locally built binary instead of downloading one |
 | `k3sBinaryPath` | Use an existing binary already on the host |
+| `nodeExternalIP` | List of external IPs advertised for the node (passed as `--node-external-ip`) |
+| `nodeInternalDNS` | List of internal DNS names for the node |
+| `nodeExternalDNS` | List of external DNS names for the node |
 | `noFlannel` | Disable the flannel CNI |
 | `os` | Override OS detection |
 
@@ -272,7 +308,11 @@ post-install verification.
 | `server` | API server advertise address/port, bind address, HTTPS port |
 | `security` | SELinux, protect-kernel-defaults, encryption provider |
 | `componentArgs` | Typed pass-through args for kube-apiserver, kubelet, etcd, and others |
-| `runtime` | System default registry, pause image, snapshotter, default runtime |
+| `runtime` | System default registry, pause image, snapshotter, default runtime, resolv.conf |
+| `embeddedRegistry` | Enable the built-in Spegel distributed container registry |
+| `imageCredentialProvider` | Kubelet image credential provider binary directory and config |
+| `localStorage` | Custom path for the local-path provisioner |
+| `etcdAdvanced` | Advanced etcd settings: metrics, snapshots, reconcile interval |
 
 Binary sources can also be a URL, a local file, or an existing installation on
 the host; see the host-level `uploadBinary` and `k3sBinaryPath` options above.
@@ -296,6 +336,12 @@ the host; see the host-level `uploadBinary` and `k3sBinaryPath` options above.
 | `s3.region` | S3 region |
 | `s3.folder` | Folder within the bucket |
 | `s3.insecure` | Use HTTP instead of HTTPS |
+| `s3.sessionToken` | STS session token for temporary AWS credentials |
+| `s3.bucketLookupType` | Bucket lookup style: `auto`, `dns`, or `path` (default `auto`) |
+| `s3.proxy` | HTTP proxy URL for S3 requests |
+| `s3.configSecret` | Name of a Kubernetes secret containing the S3 configuration |
+| `s3.timeout` | Timeout for S3 operations, for example `"30s"` |
+| `s3.retention` | Per-S3 snapshot retention count (overrides the top-level `retention`) |
 
 #### etcdSnapshots.prune
 
@@ -388,6 +434,9 @@ Declarative cluster networking configuration. All fields are server-only.
 | `flannelBackend` | Flannel backend: `none`, `vxlan`, `host-gw`, or `wireguard-native` |
 | `flannelIPv6Masq` | Enable IPv6 masquerading for flannel |
 | `flannelExternalIP` | Use node external IPs for flannel traffic |
+| `flannelIface` | Network interface to use for flannel, for example `"eth1"` |
+| `flannelConf` | Path to a custom flannel configuration file |
+| `flannelCNIConf` | Path to a custom flannel CNI configuration file |
 | `egressSelectorMode` | Egress selector mode: `agent`, `cluster`, `pod`, or `disabled` |
 | `serviceLBNamespace` | Namespace for the built-in ServiceLB controller |
 
@@ -483,6 +532,51 @@ Container runtime settings. Applied to both server and agent nodes.
 | `pauseImage` | Override the pause container image |
 | `snapshotter` | Containerd snapshotter, for example `"stargz"` |
 | `defaultRuntime` | Default container runtime, for example `"nvidia"` |
+| `resolvConf` | Path to a custom `resolv.conf` for containers, for example `"/etc/k3s-resolv.conf"` |
+
+### embeddedRegistry
+
+Enable the built-in Spegel distributed container registry. Server-only.
+
+| Key | Description |
+|---|---|
+| `enabled` | Enable the embedded Spegel distributed registry for peer-to-peer image sharing |
+
+When enabled, K3s runs a built-in registry that distributes container images
+across cluster nodes using peer-to-peer replication instead of pulling from an
+external registry for every node.
+
+### imageCredentialProvider
+
+Kubelet image credential provider for authenticating with private container
+registries. Applied to both server and agent nodes.
+
+| Key | Description |
+|---|---|
+| `binDir` | Directory containing credential provider plugin binaries (required) |
+| `config` | Path to the credential provider configuration file (required) |
+
+Both `binDir` and `config` must be set together. K3s passes them as
+`--image-credential-provider-bin-dir` and `--image-credential-provider-config`.
+
+### localStorage
+
+Local-path provisioner settings. Server-only.
+
+| Key | Description |
+|---|---|
+| `path` | Storage path used by the built-in local-path provisioner, for example `"/opt/local-path-provisioner"` |
+
+### etcdAdvanced
+
+Advanced etcd tuning options. Server-only.
+
+| Key | Description |
+|---|---|
+| `exposeMetrics` | Expose etcd metrics to the `/metrics` endpoint |
+| `disableSnapshots` | Disable automatic etcd snapshots |
+| `snapshotName` | Name prefix for etcd snapshots |
+| `snapshotReconcileInterval` | Interval for snapshot reconciliation, for example `"5m"` |
 
 ## Options
 
