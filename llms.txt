@@ -14,7 +14,7 @@ Declarative Kubernetes lifecycle, read-only database MCP servers, and a Kubernet
 
 - [k3sctl](/docs/k3sctl.md): Declarative lifecycle management for K3s clusters over SSH — install, upgrade, reconfigure, back up, and reset from one YAML file.
 - [Installation](/docs/k3sctl/installation.md): Install k3sctl from a release binary, with Go, or build it from source.
-- [Configuration](/docs/k3sctl/configuration.md): The k3sctl Cluster file — hosts, roles, SSH access, K3s settings, networking, security, TLS, datastore, component args, runtime, embedded registry, image credential providers, local storage, etcd snapshots and tuning, registries, health checks, and additional manifests.
+- [Configuration](/docs/k3sctl/configuration.md): The k3sctl Cluster file — hosts, roles, SSH access, K3s settings, networking, security, TLS, datastore, component args, runtime, embedded registry, image credential providers, local storage, etcd snapshots and tuning, registries, health checks, token files, kubeconfig path, supervisor metrics, rootless mode, CRI endpoints, agent load balancer, node ID, and additional manifests.
 - [Commands](/docs/k3sctl/commands.md): The k3sctl CLI — apply, reset, kubeconfig, restore, config, init, and more.
 
 #### mssql-mcp-go

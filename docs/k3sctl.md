@@ -79,6 +79,24 @@ k3sctl kubeconfig > kubeconfig.yaml
   `flannelCNIConf`).
 * Advanced S3 snapshot storage: session tokens, bucket lookup type, proxy,
   config secret, timeout, and per-S3 retention (`etcdSnapshots.s3`).
+* Token files: read server and agent tokens from files instead of inline
+  values (`token.tokenFile`, `token.agentTokenFile`).
+* Kubeconfig output path: write the kubeconfig to a custom location
+  (`kubeconfig.path`).
+* Supervisor metrics and pprof: expose the supervisor metrics and profiling
+  endpoints (`server.supervisorMetrics`, `server.enablePprof`).
+* Rootless mode: run K3s without root privileges, and prefer bundled
+  binaries over host-installed versions (`security.rootless`,
+  `security.preferBundledBin`).
+* CRI endpoint override: point K3s at a custom container runtime or image
+  service socket (`runtime.containerRuntimeEndpoint`,
+  `runtime.imageServiceEndpoint`).
+* Registry endpoint control: disable the default network endpoint for the
+  embedded Spegel registry (`embeddedRegistry.disableDefaultRegistryEndpoint`).
+* Agent load balancer port: configure the port the agent uses to reach the
+  control plane (`agent.lbServerPort`).
+* Per-host node ID: append the machine ID to the node name for uniqueness
+  in auto-scaled or cloned environments (`withNodeID`).
 
 ::: warning
 Linux hosts only. `k3sctl` drives the cluster over SSH, so each host must be

@@ -4,7 +4,8 @@ description: >-
   The k3sctl Cluster file — hosts, roles, SSH access, K3s settings, networking,
   security, TLS, datastore, component args, runtime, embedded registry, image
   credential providers, local storage, etcd snapshots and tuning, registries,
-  health checks, and additional manifests.
+  health checks, token files, kubeconfig path, supervisor metrics, rootless
+  mode, CRI endpoints, agent load balancer, node ID, and additional manifests.
 ---
 
 # Configuration
@@ -51,6 +52,7 @@ spec:
         user: root
         port: 22
         keyPath: ~/.ssh/id_ed25519
+      withNodeID: true                   # append machine ID to node name
       nodeExternalIP:                    # per-host external IPs
         - 203.0.113.10
       nodeInternalDNS:                   # per-host internal DNS names
@@ -104,6 +106,8 @@ spec:
     token:                             # cluster tokens
       serverToken: my-server-secret
       agentToken: my-agent-secret
+      tokenFile: /etc/rancher/k3s/token     # read token from a file
+      agentTokenFile: /etc/rancher/k3s/agent-token
       rotate: true                     # rotate token and restart all nodes
 
     registries:                        # private registry configuration
@@ -174,6 +178,7 @@ spec:
       mode: "0644"
       group: admin
       name: my-cluster
+      path: /output/kubeconfig.yaml    # custom kubeconfig output path
 
     datastore:                         # external datastore (MySQL/Postgres/etcd)
       endpoint: "postgres://user:pass@db:5432/k3s"
@@ -186,11 +191,15 @@ spec:
       advertisePort: 6443
       bindAddress: 0.0.0.0
       httpsPort: 6443
+      supervisorMetrics: true          # expose supervisor metrics endpoint
+      enablePprof: true                # enable pprof profiling endpoint
 
     security:                          # security hardening
       selinux: true
       protectKernelDefaults: true
       encryptionProvider: secretbox     # aescbc or secretbox
+      rootless: true                   # run K3s in rootless mode
+      preferBundledBin: true           # prefer bundled binaries over host ones
 
     componentArgs:                     # typed pass-through args for K3s components
       kubeAPIServer:
@@ -213,13 +222,19 @@ spec:
       snapshotter: stargz
       defaultRuntime: nvidia
       resolvConf: /etc/k3s-resolv.conf  # custom resolv.conf for containers
+      containerRuntimeEndpoint: unix:///run/containerd/containerd.sock
+      imageServiceEndpoint: unix:///run/containerd/containerd.sock
 
     embeddedRegistry:                  # built-in Spegel distributed registry
       enabled: true
+      disableDefaultRegistryEndpoint: false  # disable the default registry endpoint
 
     imageCredentialProvider:           # kubelet image credential provider
       binDir: /var/lib/rancher/credentialprovider/bin
       config: /var/lib/rancher/credentialprovider/config.yaml
+
+    agent:                             # agent-specific settings
+      lbServerPort: 6444               # agent load balancer port (0-65535)
 
     localStorage:                      # local-path provisioner settings
       path: /opt/local-path-provisioner
@@ -267,6 +282,7 @@ spec:
 | `nodeExternalIP` | List of external IPs advertised for the node (passed as `--node-external-ip`) |
 | `nodeInternalDNS` | List of internal DNS names for the node |
 | `nodeExternalDNS` | List of external DNS names for the node |
+| `withNodeID` | Append the machine ID to the node name for uniqueness |
 | `noFlannel` | Disable the flannel CNI |
 | `os` | Override OS detection |
 
@@ -313,6 +329,7 @@ post-install verification.
 | `imageCredentialProvider` | Kubelet image credential provider binary directory and config |
 | `localStorage` | Custom path for the local-path provisioner |
 | `etcdAdvanced` | Advanced etcd settings: metrics, snapshots, reconcile interval |
+| `agent` | Agent-specific settings: load balancer server port |
 
 Binary sources can also be a URL, a local file, or an existing installation on
 the host; see the host-level `uploadBinary` and `k3sBinaryPath` options above.
@@ -372,6 +389,8 @@ the host; see the host-level `uploadBinary` and `k3sBinaryPath` options above.
 |---|---|
 | `serverToken` | Token used for server-to-server communication |
 | `agentToken` | Token used for agent-to-server communication |
+| `tokenFile` | Path to a file containing the server token (mutually exclusive with `serverToken`) |
+| `agentTokenFile` | Path to a file containing the agent token (mutually exclusive with `agentToken`) |
 | `rotate` | Rotate the cluster join token and restart all nodes |
 
 ### registries
@@ -471,6 +490,7 @@ Controls how the admin kubeconfig file is written on server nodes. Server-only.
 | `mode` | File permission mode for `kubeconfig`, for example `"0644"` |
 | `group` | Group ownership for the kubeconfig file |
 | `name` | Cluster name written into the kubeconfig |
+| `path` | Custom output path for the kubeconfig file |
 
 ### datastore
 
@@ -494,6 +514,8 @@ API server listener settings. Server-only.
 | `advertisePort` | Port the API server advertises (default `6443`) |
 | `bindAddress` | Address the API server binds to, for example `"0.0.0.0"` |
 | `httpsPort` | HTTPS listen port for the API server |
+| `supervisorMetrics` | Enable the supervisor metrics endpoint |
+| `enablePprof` | Enable the pprof profiling endpoint on the supervisor |
 
 ### security
 
@@ -504,6 +526,8 @@ Security hardening options. Applied to both server and agent nodes.
 | `selinux` | Enable SELinux support in K3s |
 | `protectKernelDefaults` | Protect kernel defaults; K3s will error if required kernel parameters are not set |
 | `encryptionProvider` | Secrets encryption provider: `aescbc` or `secretbox` |
+| `rootless` | Run K3s in rootless mode (no root privileges required) |
+| `preferBundledBin` | Prefer K3s bundled binaries (containerd, runc, etc.) over host-installed versions |
 
 ### componentArgs
 
@@ -533,6 +557,8 @@ Container runtime settings. Applied to both server and agent nodes.
 | `snapshotter` | Containerd snapshotter, for example `"stargz"` |
 | `defaultRuntime` | Default container runtime, for example `"nvidia"` |
 | `resolvConf` | Path to a custom `resolv.conf` for containers, for example `"/etc/k3s-resolv.conf"` |
+| `containerRuntimeEndpoint` | CRI endpoint for the container runtime, for example `"unix:///run/containerd/containerd.sock"` |
+| `imageServiceEndpoint` | CRI endpoint for the image service, for example `"unix:///run/containerd/containerd.sock"` |
 
 ### embeddedRegistry
 
@@ -541,6 +567,7 @@ Enable the built-in Spegel distributed container registry. Server-only.
 | Key | Description |
 |---|---|
 | `enabled` | Enable the embedded Spegel distributed registry for peer-to-peer image sharing |
+| `disableDefaultRegistryEndpoint` | Disable the default network endpoint for the embedded registry |
 
 When enabled, K3s runs a built-in registry that distributes container images
 across cluster nodes using peer-to-peer replication instead of pulling from an
@@ -577,6 +604,14 @@ Advanced etcd tuning options. Server-only.
 | `disableSnapshots` | Disable automatic etcd snapshots |
 | `snapshotName` | Name prefix for etcd snapshots |
 | `snapshotReconcileInterval` | Interval for snapshot reconciliation, for example `"5m"` |
+
+### agent
+
+Agent-specific settings. Applied only to agent nodes.
+
+| Key | Description |
+|---|---|
+| `lbServerPort` | Port for the agent load balancer that fronts the control plane (0–65535) |
 
 ## Options
 
