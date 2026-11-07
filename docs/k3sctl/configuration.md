@@ -1,8 +1,9 @@
 ---
 url: /docs/k3sctl/configuration.md
 description: >-
-  The k3sctl Cluster file — hosts, roles, SSH access, K3s settings, etcd
-  snapshots, registries, health checks, and additional manifests.
+  The k3sctl Cluster file — hosts, roles, SSH access, K3s settings, networking,
+  security, TLS, datastore, component args, runtime, etcd snapshots, registries,
+  health checks, and additional manifests.
 ---
 
 # Configuration
@@ -122,6 +123,80 @@ spec:
       enabled: true
       imageBundle: /path/to/k3s-airgap-images-amd64.tar.zst
 
+    network:                           # cluster networking
+      clusterCIDR:
+        - 10.42.0.0/16
+      serviceCIDR:
+        - 10.43.0.0/16
+      clusterDNS:
+        - 10.43.0.10
+      clusterDomain: cluster.local
+      nodePortRange: "30000-32767"
+      flannelBackend: vxlan             # none, vxlan, host-gw, wireguard-native
+      flannelIPv6Masq: false
+      flannelExternalIP: false
+      egressSelectorMode: agent         # agent, cluster, pod, disabled
+      serviceLBNamespace: kube-system
+
+    disable:                           # disable packaged components
+      components:
+        - traefik
+        - servicelb
+      scheduler: false
+      cloudController: false
+      kubeProxy: false
+      networkPolicy: false
+      helmController: false
+
+    tls:                               # API server TLS SANs
+      sans:
+        - lb.example.com
+        - 10.0.0.100
+      sanSecurity: true
+
+    kubeconfig:                        # kubeconfig output settings
+      mode: "0644"
+      group: admin
+      name: my-cluster
+
+    datastore:                         # external datastore (MySQL/Postgres/etcd)
+      endpoint: "postgres://user:pass@db:5432/k3s"
+      caFile: /etc/ssl/ca.pem
+      certFile: /etc/ssl/cert.pem
+      keyFile: /etc/ssl/key.pem
+
+    server:                            # API server listener settings
+      advertiseAddress: 10.0.0.50
+      advertisePort: 6443
+      bindAddress: 0.0.0.0
+      httpsPort: 6443
+
+    security:                          # security hardening
+      selinux: true
+      protectKernelDefaults: true
+      encryptionProvider: secretbox     # aescbc or secretbox
+
+    componentArgs:                     # typed pass-through args for K3s components
+      kubeAPIServer:
+        - "--audit-log-path=/var/log/audit.log"
+      kubeControllerManager:
+        - "--node-cidr-mask-size=24"
+      kubeScheduler: []
+      kubeCloudControllerManager: []
+      kubelet:
+        - "--max-pods=110"
+      kubeProxy:
+        - "--proxy-mode=ipvs"
+      etcd:
+        - "--quota-backend-bytes=8589934592"
+      helmController: []
+
+    runtime:                           # container runtime settings
+      systemDefaultRegistry: registry.example.com
+      pauseImage: registry.example.com/pause:3.9
+      snapshotter: stargz
+      defaultRuntime: nvidia
+
   options:
     drain:
       enabled: true
@@ -189,6 +264,15 @@ post-install verification.
 | `healthCheck` | Post-apply cluster health verification |
 | `preflight` | Pre-flight checks run before apply |
 | `airgap` | Air-gap (offline) installation settings |
+| `network` | Cluster and service CIDRs, DNS, flannel backend, egress mode, NodePort range |
+| `disable` | Disable packaged components and individual K3s subsystems |
+| `tls` | Subject Alternative Names for the API server certificate |
+| `kubeconfig` | Write-kubeconfig mode, group, and name |
+| `datastore` | External datastore endpoint (MySQL/Postgres/etcd) with TLS |
+| `server` | API server advertise address/port, bind address, HTTPS port |
+| `security` | SELinux, protect-kernel-defaults, encryption provider |
+| `componentArgs` | Typed pass-through args for kube-apiserver, kubelet, etcd, and others |
+| `runtime` | System default registry, pause image, snapshotter, default runtime |
 
 Binary sources can also be a URL, a local file, or an existing installation on
 the host; see the host-level `uploadBinary` and `k3sBinaryPath` options above.
@@ -289,6 +373,116 @@ and all nodes reach `Ready` status before the apply completes.
 | `imageBundle` | Local path to a K3s air-gap image bundle, for example `k3s-airgap-images-amd64.tar.zst` |
 
 When enabled, the bundle is uploaded to `<dataDir>/agent/images/` on every host.
+
+### network
+
+Declarative cluster networking configuration. All fields are server-only.
+
+| Key | Description |
+|---|---|
+| `clusterCIDR` | Pod CIDR ranges, for example `["10.42.0.0/16"]` or dual-stack `["10.42.0.0/16", "fd42::/48"]` |
+| `serviceCIDR` | Service CIDR ranges, for example `["10.43.0.0/16"]` |
+| `clusterDNS` | Cluster DNS service addresses, for example `["10.43.0.10"]` |
+| `clusterDomain` | Cluster domain, for example `cluster.local` |
+| `nodePortRange` | NodePort service port range, for example `"30000-32767"` |
+| `flannelBackend` | Flannel backend: `none`, `vxlan`, `host-gw`, or `wireguard-native` |
+| `flannelIPv6Masq` | Enable IPv6 masquerading for flannel |
+| `flannelExternalIP` | Use node external IPs for flannel traffic |
+| `egressSelectorMode` | Egress selector mode: `agent`, `cluster`, `pod`, or `disabled` |
+| `serviceLBNamespace` | Namespace for the built-in ServiceLB controller |
+
+### disable
+
+Disable packaged K3s components and subsystems. Server-only.
+
+| Key | Description |
+|---|---|
+| `components` | List of packaged components to disable, for example `["traefik", "servicelb", "metrics-server", "coredns"]` |
+| `scheduler` | Disable the kube-scheduler |
+| `cloudController` | Disable the cloud controller manager |
+| `kubeProxy` | Disable kube-proxy |
+| `networkPolicy` | Disable the network policy controller |
+| `helmController` | Disable the Helm controller |
+
+### tls
+
+TLS Subject Alternative Names for the API server certificate. Server-only.
+
+| Key | Description |
+|---|---|
+| `sans` | Additional SANs for the API server TLS certificate, for example `["lb.example.com", "10.0.0.100"]` |
+| `sanSecurity` | Enable TLS SAN security mode |
+
+### kubeconfig
+
+Controls how the admin kubeconfig file is written on server nodes. Server-only.
+
+| Key | Description |
+|---|---|
+| `mode` | File permission mode for `kubeconfig`, for example `"0644"` |
+| `group` | Group ownership for the kubeconfig file |
+| `name` | Cluster name written into the kubeconfig |
+
+### datastore
+
+External datastore configuration for MySQL, PostgreSQL, or etcd. Server-only.
+TLS fields require `endpoint` to be set.
+
+| Key | Description |
+|---|---|
+| `endpoint` | Datastore connection string, for example `"postgres://user:pass@db:5432/k3s"` |
+| `caFile` | Path to the CA certificate for the datastore TLS connection |
+| `certFile` | Path to the client certificate for the datastore TLS connection |
+| `keyFile` | Path to the client key for the datastore TLS connection |
+
+### server
+
+API server listener settings. Server-only.
+
+| Key | Description |
+|---|---|
+| `advertiseAddress` | Address the API server advertises to cluster members |
+| `advertisePort` | Port the API server advertises (default `6443`) |
+| `bindAddress` | Address the API server binds to, for example `"0.0.0.0"` |
+| `httpsPort` | HTTPS listen port for the API server |
+
+### security
+
+Security hardening options. Applied to both server and agent nodes.
+
+| Key | Description |
+|---|---|
+| `selinux` | Enable SELinux support in K3s |
+| `protectKernelDefaults` | Protect kernel defaults; K3s will error if required kernel parameters are not set |
+| `encryptionProvider` | Secrets encryption provider: `aescbc` or `secretbox` |
+
+### componentArgs
+
+Typed pass-through arguments for Kubernetes components. Server-only args are
+applied only to server configs; `kubelet` and `kubeProxy` are applied to both
+server and agent configs.
+
+| Key | Applies to | Description |
+|---|---|---|
+| `kubeAPIServer` | Server | Extra arguments for kube-apiserver |
+| `kubeControllerManager` | Server | Extra arguments for kube-controller-manager |
+| `kubeScheduler` | Server | Extra arguments for kube-scheduler |
+| `kubeCloudControllerManager` | Server | Extra arguments for kube-cloud-controller-manager |
+| `kubelet` | Server + Agent | Extra arguments for kubelet |
+| `kubeProxy` | Server + Agent | Extra arguments for kube-proxy |
+| `etcd` | Server | Extra arguments for etcd |
+| `helmController` | Server | Extra arguments for the Helm controller |
+
+### runtime
+
+Container runtime settings. Applied to both server and agent nodes.
+
+| Key | Description |
+|---|---|
+| `systemDefaultRegistry` | Default registry for all system images, for example `"registry.example.com"` |
+| `pauseImage` | Override the pause container image |
+| `snapshotter` | Containerd snapshotter, for example `"stargz"` |
+| `defaultRuntime` | Default container runtime, for example `"nvidia"` |
 
 ## Options
 

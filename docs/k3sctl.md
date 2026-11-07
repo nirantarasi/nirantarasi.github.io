@@ -44,6 +44,25 @@ k3sctl kubeconfig > kubeconfig.yaml
 * Cluster join token rotation (`token.rotate`).
 * Post-apply cluster health verification (`healthCheck`).
 * Pre-flight checks for cgroups, kernel modules, ports, and disk (`preflight`).
+* Declarative networking: cluster/service CIDRs, DNS, flannel backend,
+  egress selector mode, NodePort range, and ServiceLB namespace (`network`).
+* Component disabling: turn off packaged components like traefik, servicelb,
+  metrics-server, and individual subsystems like kube-proxy or the Helm
+  controller (`disable`).
+* TLS SAN management: add Subject Alternative Names to the API server
+  certificate (`tls`).
+* Kubeconfig output control: file mode, group, and cluster name (`kubeconfig`).
+* External datastore: MySQL, PostgreSQL, or etcd endpoint with TLS
+  (`datastore`).
+* API server listener: advertise address/port, bind address, HTTPS port
+  (`server`).
+* Security hardening: SELinux, kernel defaults protection, and encryption
+  provider selection (`security`).
+* Typed component arguments: pass arguments directly to kube-apiserver,
+  kube-controller-manager, kubelet, kube-proxy, etcd, and others
+  (`componentArgs`).
+* Container runtime: system default registry, pause image, snapshotter, and
+  default runtime override (`runtime`).
 
 ::: warning
 Linux hosts only. `k3sctl` drives the cluster over SSH, so each host must be
