@@ -8,17 +8,17 @@ description: Install mssql-mcp-go with Homebrew, a release binary, Docker, or fr
 ## Homebrew (macOS / Linux)
 
 ```sh
-brew install vinaycharlie01/tap/mssql-mcp-go
+brew install nirantarasi/tap/mssql-mcp-go
 ```
 
 ## Download a binary
 
 Pre-built binaries for Linux, macOS, and Windows (`amd64` / `arm64`) are
-published with every [GitHub release](https://github.com/vinaycharlie01/mssql-mcp-go/releases).
+published with every [GitHub release](https://github.com/nirantarasi/mssql-mcp-go/releases).
 
 ```sh
 # Example: the latest release for macOS arm64
-curl -LO https://github.com/vinaycharlie01/mssql-mcp-go/releases/latest/download/mssql-mcp-go_darwin_arm64.tar.gz
+curl -LO https://github.com/nirantarasi/mssql-mcp-go/releases/latest/download/mssql-mcp-go_darwin_arm64.tar.gz
 tar xzf mssql-mcp-go_darwin_arm64.tar.gz
 sudo mv mssql-mcp-go /usr/local/bin/
 ```
@@ -26,7 +26,7 @@ sudo mv mssql-mcp-go /usr/local/bin/
 ## Docker
 
 ```sh
-docker pull ghcr.io/vinaycharlie01/mssql-mcp-go:latest
+docker pull ghcr.io/nirantarasi/mssql-mcp-go:latest
 
 docker run --rm \
   -e SQLSERVER_HOST=host.docker.internal \
@@ -34,7 +34,7 @@ docker run --rm \
   -e SQLSERVER_USER=readonly_user \
   -e SQLSERVER_PASSWORD=secret \
   -e SQLSERVER_DATABASE=MyDatabase \
-  ghcr.io/vinaycharlie01/mssql-mcp-go:latest
+  ghcr.io/nirantarasi/mssql-mcp-go:latest
 ```
 
 ## Build from source
@@ -42,7 +42,7 @@ docker run --rm \
 Requires Go 1.25 or newer.
 
 ```sh
-git clone https://github.com/vinaycharlie01/mssql-mcp-go.git
+git clone https://github.com/nirantarasi/mssql-mcp-go.git
 cd mssql-mcp-go
 go build -o dist/mssql-mcp-go ./cmd/server
 ```

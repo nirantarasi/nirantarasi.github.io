@@ -13,12 +13,24 @@ description: >-
 describing your hosts and it installs, upgrades, reconfigures, backs up, and
 resets the cluster over SSH.
 
+**Single-node (localhost)** — no SSH required:
+
+```sh
+k3sctl init --localhost --name dev > k3sctl.yaml
+k3sctl apply --config k3sctl.yaml
+k3sctl kubeconfig --config k3sctl.yaml > kubeconfig.yaml
+```
+
+**Multi-node (SSH)** — server + agent:
+
 ```sh
 k3sctl init --name demo --address 10.0.0.1 --agent --agent-address 10.0.0.2 > k3sctl.yaml
-$EDITOR k3sctl.yaml
 k3sctl apply --config k3sctl.yaml
-k3sctl kubeconfig > kubeconfig.yaml
+k3sctl kubeconfig --config k3sctl.yaml > kubeconfig.yaml
 ```
+
+See the [Quick Start](./quick-start.md) guide for step-by-step instructions
+covering single-node, multi-node, and high-availability setups.
 
 ## What it does
 
@@ -119,12 +131,15 @@ the normal way to change a cluster.
 
 ## Requirements
 
-* Linux hosts for servers and agents.
-* SSH access, with a key or the agent available to `k3sctl`.
-* Root or passwordless `sudo` on each host.
+* Linux hosts for servers and agents (or the local machine for single-node).
+* SSH access with a key or agent (not needed for localhost mode).
+* Root or passwordless `sudo` on each host. `k3sctl` handles `sudo`
+  internally — do not prefix commands with `sudo`.
 
 ## Next steps
 
+* [Quick Start](./quick-start.md): step-by-step guides for single-node,
+  multi-node, and HA clusters.
 * [Installation](./installation.md): release binary, `go install`, or build from
   source.
 * [Configuration](./configuration.md): every host, K3s, and drain option.

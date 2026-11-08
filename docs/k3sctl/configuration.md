@@ -289,8 +289,17 @@ spec:
 ### SSH access
 
 The `ssh` block takes an `address`, `user`, `port`, and `keyPath`. Use
-`openSSH` to reuse your OpenSSH client configuration, or `localhost` when the
-host is the machine running `k3sctl`.
+`openSSH` to reuse your OpenSSH client configuration, or `localhost: true`
+when the host is the machine running `k3sctl` (no SSH needed):
+
+```yaml
+spec:
+  hosts:
+  - localhost: true
+    role: server
+```
+
+Localhost mode is single-node only and cannot be combined with agent hosts.
 
 ### Files and hooks
 

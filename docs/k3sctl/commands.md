@@ -86,14 +86,33 @@ k3sctl config validate --config k3sctl.yaml
 
 ## Common workflows
 
+### Generate a config
+
+Single-node localhost (no SSH):
+
+```sh
+k3sctl init --localhost --name dev > k3sctl.yaml
+```
+
+Multi-node with a server and an agent:
+
+```sh
+k3sctl init --name demo --address 10.0.0.1 --agent --agent-address 10.0.0.2 > k3sctl.yaml
+```
+
+When `version` is left empty in the generated config, `k3sctl` automatically
+resolves the latest stable K3s release.
+
 ### Create a cluster
 
 ```sh
 k3sctl apply --config k3sctl.yaml
-k3sctl kubeconfig > kubeconfig.yaml
+k3sctl kubeconfig --config k3sctl.yaml > kubeconfig.yaml
 export KUBECONFIG="$PWD/kubeconfig.yaml"
 kubectl get nodes
 ```
+
+`k3sctl` handles `sudo` internally — do not prefix commands with `sudo`.
 
 ### Validate and preview before applying
 
@@ -103,27 +122,34 @@ k3sctl config diff --config k3sctl.yaml
 k3sctl apply --config k3sctl.yaml --dry-run
 ```
 
+### Upgrade K3s
+
+Edit the `version` in `k3sctl.yaml`, then:
+
+```sh
+k3sctl config diff --config k3sctl.yaml
+k3sctl apply --config k3sctl.yaml
+```
+
+`k3sctl` performs a rolling upgrade with drain/cordon.
+
 ### Restore etcd
 
 ```sh
-# Restore from a snapshot on the server
 k3sctl restore --config k3sctl.yaml --from /path/to/snapshot.db
 ```
 
 Snapshots are scheduled with the `etcdSnapshots` configuration block; see
 [Configuration](./configuration.md) for scheduling, S3 upload, and pruning.
 
-### Generate a starter file
-
-```sh
-k3sctl init --name demo --address 10.0.0.1 --agent --agent-address 10.0.0.2 > k3sctl.yaml
-```
-
 ### Tear the cluster down
 
 ```sh
 k3sctl reset --config k3sctl.yaml
 ```
+
+For step-by-step guides covering single-node, multi-node, and HA topologies,
+see [Quick Start](./quick-start.md).
 
 ## version and completion
 

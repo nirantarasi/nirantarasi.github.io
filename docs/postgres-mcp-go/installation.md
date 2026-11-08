@@ -10,17 +10,17 @@ description: >-
 ## Homebrew (macOS / Linux)
 
 ```sh
-brew install vinaycharlie01/tap/postgres-mcp-go
+brew install nirantarasi/tap/postgres-mcp-go
 ```
 
 ## Download a binary
 
 Pre-built binaries for Linux, macOS, and Windows (`amd64` / `arm64`) are
-published with every [GitHub release](https://github.com/vinaycharlie01/postgres-mcp-go/releases).
+published with every [GitHub release](https://github.com/nirantarasi/postgres-mcp-go/releases).
 
 ```sh
 # Example: the latest release for macOS arm64
-curl -LO https://github.com/vinaycharlie01/postgres-mcp-go/releases/latest/download/postgres-mcp-go_darwin_arm64.tar.gz
+curl -LO https://github.com/nirantarasi/postgres-mcp-go/releases/latest/download/postgres-mcp-go_darwin_arm64.tar.gz
 tar xzf postgres-mcp-go_darwin_arm64.tar.gz
 sudo mv postgres-mcp-go /usr/local/bin/
 ```
@@ -28,7 +28,7 @@ sudo mv postgres-mcp-go /usr/local/bin/
 ## Docker
 
 ```sh
-docker pull ghcr.io/vinaycharlie01/postgres-mcp-go:latest
+docker pull ghcr.io/nirantarasi/postgres-mcp-go:latest
 
 docker run --rm \
   -e POSTGRES_HOST=host.docker.internal \
@@ -36,7 +36,7 @@ docker run --rm \
   -e POSTGRES_USER=readonly_user \
   -e POSTGRES_PASSWORD=secret \
   -e POSTGRES_DB=mydb \
-  ghcr.io/vinaycharlie01/postgres-mcp-go:latest
+  ghcr.io/nirantarasi/postgres-mcp-go:latest
 ```
 
 ## Build from source
@@ -44,7 +44,7 @@ docker run --rm \
 Requires Go 1.27 or newer.
 
 ```sh
-git clone https://github.com/vinaycharlie01/postgres-mcp-go.git
+git clone https://github.com/nirantarasi/postgres-mcp-go.git
 cd postgres-mcp-go
 go build -o dist/postgres-mcp-go ./cmd/server
 ```

@@ -107,7 +107,7 @@ Otherwise, use its full path.
         "-e", "POSTGRES_USER=readonly_user",
         "-e", "POSTGRES_PASSWORD=secret",
         "-e", "POSTGRES_DB=mydb",
-        "ghcr.io/vinaycharlie01/postgres-mcp-go:latest"
+        "ghcr.io/nirantarasi/postgres-mcp-go:latest"
       ]
     }
   }

@@ -71,12 +71,24 @@ description: >-
 describing your hosts and it installs, upgrades, reconfigures, backs up, and
 resets the cluster over SSH.
 
+**Single-node (localhost)** — no SSH required:
+
+```sh
+k3sctl init --localhost --name dev > k3sctl.yaml
+k3sctl apply --config k3sctl.yaml
+k3sctl kubeconfig --config k3sctl.yaml > kubeconfig.yaml
+```
+
+**Multi-node (SSH)** — server + agent:
+
 ```sh
 k3sctl init --name demo --address 10.0.0.1 --agent --agent-address 10.0.0.2 > k3sctl.yaml
-$EDITOR k3sctl.yaml
 k3sctl apply --config k3sctl.yaml
-k3sctl kubeconfig > kubeconfig.yaml
+k3sctl kubeconfig --config k3sctl.yaml > kubeconfig.yaml
 ```
+
+See the [Quick Start](./quick-start.md) guide for step-by-step instructions
+covering single-node, multi-node, and high-availability setups.
 
 ## What it does
 
@@ -177,12 +189,15 @@ the normal way to change a cluster.
 
 ## Requirements
 
-* Linux hosts for servers and agents.
-* SSH access, with a key or the agent available to `k3sctl`.
-* Root or passwordless `sudo` on each host.
+* Linux hosts for servers and agents (or the local machine for single-node).
+* SSH access with a key or agent (not needed for localhost mode).
+* Root or passwordless `sudo` on each host. `k3sctl` handles `sudo`
+  internally — do not prefix commands with `sudo`.
 
 ## Next steps
 
+* [Quick Start](./quick-start.md): step-by-step guides for single-node,
+  multi-node, and HA clusters.
 * [Installation](./installation.md): release binary, `go install`, or build from
   source.
 * [Configuration](./configuration.md): every host, K3s, and drain option.
@@ -200,26 +215,65 @@ description: Install k3sctl from a release binary, with Go, or build it from sou
 `k3sctl` ships as a single static binary. Pick the method that fits your
 workflow.
 
-## Release binary
-
-Download the binary for your platform and put it on your `PATH`:
+## Homebrew (macOS / Linux)
 
 ```sh
-curl -sSfL -o k3sctl \
-  https://github.com/vinaycharlie01/k3sctl/releases/latest/download/k3sctl_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m)
-chmod +x k3sctl
-sudo install -m 755 k3sctl /usr/local/bin/k3sctl
+brew install nirantarasi/tap/k3sctl
 ```
 
-Release assets are published for Linux and macOS on `amd64`, `arm64`, and
-`arm`.
+## Shell script (Linux / macOS)
+
+```sh
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m)
+case "$ARCH" in
+  x86_64)  ARCH="amd64" ;;
+  aarch64) ARCH="arm64" ;;
+  armv7l)  ARCH="arm" ;;
+esac
+VERSION=$(curl -sI https://github.com/nirantarasi/k3sctl/releases/latest | grep -i location | sed 's/.*tag\///' | tr -d '\r\n')
+TMPDIR=$(mktemp -d)
+curl -sSfL "https://github.com/nirantarasi/k3sctl/releases/download/${VERSION}/k3sctl_${VERSION#v}_${OS}_${ARCH}.tar.gz" | tar xz -C "$TMPDIR"
+sudo install -m 755 "$TMPDIR/k3sctl" /usr/local/bin/k3sctl
+rm -rf "$TMPDIR"
+```
+
+Release assets are published for Linux, macOS, and Windows on `amd64`,
+`arm64`, and `arm`.
+
+## Debian / Ubuntu
+
+```sh
+VERSION=$(curl -sI https://github.com/nirantarasi/k3sctl/releases/latest | grep -i location | sed 's/.*tag\///' | tr -d '\r\n')
+curl -sSfL -O "https://github.com/nirantarasi/k3sctl/releases/download/${VERSION}/k3sctl_${VERSION#v}_linux_amd64.deb"
+sudo dpkg -i k3sctl_*.deb
+rm -f k3sctl_*.deb
+```
+
+## RHEL / Fedora
+
+```sh
+VERSION=$(curl -sI https://github.com/nirantarasi/k3sctl/releases/latest | grep -i location | sed 's/.*tag\///' | tr -d '\r\n')
+curl -sSfL -O "https://github.com/nirantarasi/k3sctl/releases/download/${VERSION}/k3sctl_${VERSION#v}_linux_amd64.rpm"
+sudo rpm -i k3sctl_*.rpm
+rm -f k3sctl_*.rpm
+```
+
+## Alpine
+
+```sh
+VERSION=$(curl -sI https://github.com/nirantarasi/k3sctl/releases/latest | grep -i location | sed 's/.*tag\///' | tr -d '\r\n')
+curl -sSfL -O "https://github.com/nirantarasi/k3sctl/releases/download/${VERSION}/k3sctl_${VERSION#v}_linux_amd64.apk"
+sudo apk add --allow-untrusted k3sctl_*.apk
+rm -f k3sctl_*.apk
+```
 
 ## With Go
 
 If you already have a Go toolchain:
 
 ```sh
-go install github.com/vinaycharlie01/k3sctl@latest
+go install github.com/nirantarasi/k3sctl@latest
 ```
 
 This installs `k3sctl` into `$(go env GOPATH)/bin`.
@@ -227,7 +281,7 @@ This installs `k3sctl` into `$(go env GOPATH)/bin`.
 ## Build from source
 
 ```sh
-git clone https://github.com/vinaycharlie01/k3sctl.git
+git clone https://github.com/nirantarasi/k3sctl.git
 cd k3sctl
 go build -o k3sctl .
 ./k3sctl version
@@ -559,8 +613,17 @@ spec:
 ### SSH access
 
 The `ssh` block takes an `address`, `user`, `port`, and `keyPath`. Use
-`openSSH` to reuse your OpenSSH client configuration, or `localhost` when the
-host is the machine running `k3sctl`.
+`openSSH` to reuse your OpenSSH client configuration, or `localhost: true`
+when the host is the machine running `k3sctl` (no SSH needed):
+
+```yaml
+spec:
+  hosts:
+  - localhost: true
+    role: server
+```
+
+Localhost mode is single-node only and cannot be combined with agent hosts.
 
 ### Files and hooks
 
@@ -1049,14 +1112,33 @@ k3sctl config validate --config k3sctl.yaml
 
 ## Common workflows
 
+### Generate a config
+
+Single-node localhost (no SSH):
+
+```sh
+k3sctl init --localhost --name dev > k3sctl.yaml
+```
+
+Multi-node with a server and an agent:
+
+```sh
+k3sctl init --name demo --address 10.0.0.1 --agent --agent-address 10.0.0.2 > k3sctl.yaml
+```
+
+When `version` is left empty in the generated config, `k3sctl` automatically
+resolves the latest stable K3s release.
+
 ### Create a cluster
 
 ```sh
 k3sctl apply --config k3sctl.yaml
-k3sctl kubeconfig > kubeconfig.yaml
+k3sctl kubeconfig --config k3sctl.yaml > kubeconfig.yaml
 export KUBECONFIG="$PWD/kubeconfig.yaml"
 kubectl get nodes
 ```
+
+`k3sctl` handles `sudo` internally — do not prefix commands with `sudo`.
 
 ### Validate and preview before applying
 
@@ -1066,27 +1148,34 @@ k3sctl config diff --config k3sctl.yaml
 k3sctl apply --config k3sctl.yaml --dry-run
 ```
 
+### Upgrade K3s
+
+Edit the `version` in `k3sctl.yaml`, then:
+
+```sh
+k3sctl config diff --config k3sctl.yaml
+k3sctl apply --config k3sctl.yaml
+```
+
+`k3sctl` performs a rolling upgrade with drain/cordon.
+
 ### Restore etcd
 
 ```sh
-# Restore from a snapshot on the server
 k3sctl restore --config k3sctl.yaml --from /path/to/snapshot.db
 ```
 
 Snapshots are scheduled with the `etcdSnapshots` configuration block; see
 [Configuration](./configuration.md) for scheduling, S3 upload, and pruning.
 
-### Generate a starter file
-
-```sh
-k3sctl init --name demo --address 10.0.0.1 --agent --agent-address 10.0.0.2 > k3sctl.yaml
-```
-
 ### Tear the cluster down
 
 ```sh
 k3sctl reset --config k3sctl.yaml
 ```
+
+For step-by-step guides covering single-node, multi-node, and HA topologies,
+see [Quick Start](./quick-start.md).
 
 ## version and completion
 
@@ -1189,17 +1278,17 @@ description: Install mssql-mcp-go with Homebrew, a release binary, Docker, or fr
 ## Homebrew (macOS / Linux)
 
 ```sh
-brew install vinaycharlie01/tap/mssql-mcp-go
+brew install nirantarasi/tap/mssql-mcp-go
 ```
 
 ## Download a binary
 
 Pre-built binaries for Linux, macOS, and Windows (`amd64` / `arm64`) are
-published with every [GitHub release](https://github.com/vinaycharlie01/mssql-mcp-go/releases).
+published with every [GitHub release](https://github.com/nirantarasi/mssql-mcp-go/releases).
 
 ```sh
 # Example: the latest release for macOS arm64
-curl -LO https://github.com/vinaycharlie01/mssql-mcp-go/releases/latest/download/mssql-mcp-go_darwin_arm64.tar.gz
+curl -LO https://github.com/nirantarasi/mssql-mcp-go/releases/latest/download/mssql-mcp-go_darwin_arm64.tar.gz
 tar xzf mssql-mcp-go_darwin_arm64.tar.gz
 sudo mv mssql-mcp-go /usr/local/bin/
 ```
@@ -1207,7 +1296,7 @@ sudo mv mssql-mcp-go /usr/local/bin/
 ## Docker
 
 ```sh
-docker pull ghcr.io/vinaycharlie01/mssql-mcp-go:latest
+docker pull ghcr.io/nirantarasi/mssql-mcp-go:latest
 
 docker run --rm \
   -e SQLSERVER_HOST=host.docker.internal \
@@ -1215,7 +1304,7 @@ docker run --rm \
   -e SQLSERVER_USER=readonly_user \
   -e SQLSERVER_PASSWORD=secret \
   -e SQLSERVER_DATABASE=MyDatabase \
-  ghcr.io/vinaycharlie01/mssql-mcp-go:latest
+  ghcr.io/nirantarasi/mssql-mcp-go:latest
 ```
 
 ## Build from source
@@ -1223,7 +1312,7 @@ docker run --rm \
 Requires Go 1.25 or newer.
 
 ```sh
-git clone https://github.com/vinaycharlie01/mssql-mcp-go.git
+git clone https://github.com/nirantarasi/mssql-mcp-go.git
 cd mssql-mcp-go
 go build -o dist/mssql-mcp-go ./cmd/server
 ```
@@ -1362,7 +1451,7 @@ Otherwise, use its full path.
         "-e", "SQLSERVER_USER=readonly_user",
         "-e", "SQLSERVER_PASSWORD=secret",
         "-e", "SQLSERVER_DATABASE=MyDatabase",
-        "ghcr.io/vinaycharlie01/mssql-mcp-go:latest"
+        "ghcr.io/nirantarasi/mssql-mcp-go:latest"
       ]
     }
   }
@@ -1663,17 +1752,17 @@ description: >-
 ## Homebrew (macOS / Linux)
 
 ```sh
-brew install vinaycharlie01/tap/postgres-mcp-go
+brew install nirantarasi/tap/postgres-mcp-go
 ```
 
 ## Download a binary
 
 Pre-built binaries for Linux, macOS, and Windows (`amd64` / `arm64`) are
-published with every [GitHub release](https://github.com/vinaycharlie01/postgres-mcp-go/releases).
+published with every [GitHub release](https://github.com/nirantarasi/postgres-mcp-go/releases).
 
 ```sh
 # Example: the latest release for macOS arm64
-curl -LO https://github.com/vinaycharlie01/postgres-mcp-go/releases/latest/download/postgres-mcp-go_darwin_arm64.tar.gz
+curl -LO https://github.com/nirantarasi/postgres-mcp-go/releases/latest/download/postgres-mcp-go_darwin_arm64.tar.gz
 tar xzf postgres-mcp-go_darwin_arm64.tar.gz
 sudo mv postgres-mcp-go /usr/local/bin/
 ```
@@ -1681,7 +1770,7 @@ sudo mv postgres-mcp-go /usr/local/bin/
 ## Docker
 
 ```sh
-docker pull ghcr.io/vinaycharlie01/postgres-mcp-go:latest
+docker pull ghcr.io/nirantarasi/postgres-mcp-go:latest
 
 docker run --rm \
   -e POSTGRES_HOST=host.docker.internal \
@@ -1689,7 +1778,7 @@ docker run --rm \
   -e POSTGRES_USER=readonly_user \
   -e POSTGRES_PASSWORD=secret \
   -e POSTGRES_DB=mydb \
-  ghcr.io/vinaycharlie01/postgres-mcp-go:latest
+  ghcr.io/nirantarasi/postgres-mcp-go:latest
 ```
 
 ## Build from source
@@ -1697,7 +1786,7 @@ docker run --rm \
 Requires Go 1.27 or newer.
 
 ```sh
-git clone https://github.com/vinaycharlie01/postgres-mcp-go.git
+git clone https://github.com/nirantarasi/postgres-mcp-go.git
 cd postgres-mcp-go
 go build -o dist/postgres-mcp-go ./cmd/server
 ```
@@ -1830,7 +1919,7 @@ Otherwise, use its full path.
         "-e", "POSTGRES_USER=readonly_user",
         "-e", "POSTGRES_PASSWORD=secret",
         "-e", "POSTGRES_DB=mydb",
-        "ghcr.io/vinaycharlie01/postgres-mcp-go:latest"
+        "ghcr.io/nirantarasi/postgres-mcp-go:latest"
       ]
     }
   }
@@ -2142,7 +2231,7 @@ or more `OmniRoute` resources.
 From the OCI registry:
 
 ```sh
-helm install omniroute-operator oci://ghcr.io/vinaycharlie01/helm-charts/omniroute-operator \
+helm install omniroute-operator oci://ghcr.io/nirantarasi/helm-charts/omniroute-operator \
   --namespace omniroute-system --create-namespace
 ```
 
@@ -2164,7 +2253,7 @@ kubectl get pods -n omniroute-system
 | Value | Default | Description |
 |---|---|---|
 | `replicaCount` | `1` | Operator pod replicas |
-| `image.repository` | `ghcr.io/vinaycharlie01/omniroute-operator` | Operator image |
+| `image.repository` | `ghcr.io/nirantarasi/omniroute-operator` | Operator image |
 | `image.tag` | `""` (appVersion) | Operator image tag |
 | `leaderElection.enabled` | `true` | Enable leader election |
 | `resources.requests.cpu` | `10m` | CPU request |
@@ -2630,3 +2719,348 @@ Kubernetes operator for OmniRoute.
    ephemeral.
 6. `NODE_OPTIONS` is derived from the memory limit; do not hardcode it in
    `spec.env` unless you need to override the derived value.
+
+---
+
+---
+url: /docs/k3sctl/quick-start.md
+description: >-
+  Step-by-step guides for single-node, multi-node, and high-availability K3s
+  clusters with k3sctl.
+---
+
+# Quick Start
+
+This guide walks through three cluster topologies — pick the one that fits
+your use case.
+
+| Topology | Hosts | Best for |
+|---|---|---|
+| [Single-node (localhost)](#single-node-localhost) | 1 | Development, testing, CI |
+| [Multi-node (SSH)](#multi-node-ssh) | 2+ | Small production, staging |
+| [High availability (HA)](#high-availability-ha) | 3+ servers | Production with etcd redundancy |
+
+## Single-node (localhost)
+
+Run a one-node K3s cluster on the machine where `k3sctl` is installed. No
+SSH is needed — `k3sctl` runs commands directly on the local host.
+
+### Prerequisites
+
+* Linux machine with `k3sctl` [installed](./installation.md)
+* Root access or passwordless `sudo`
+
+### Steps
+
+**1. Generate the config**
+
+```sh
+k3sctl init --localhost --name dev > k3sctl.yaml
+```
+
+This produces a minimal config with `localhost: true` and no SSH block:
+
+```yaml
+apiVersion: k3sctl.k3sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: dev
+spec:
+  hosts:
+  - localhost: true
+    role: server
+  k3s:
+    version: ""
+```
+
+When `version` is left empty, `k3sctl` automatically resolves the latest
+stable K3s release.
+
+**2. Apply the cluster**
+
+```sh
+k3sctl apply --config k3sctl.yaml
+```
+
+`k3sctl` handles `sudo` internally — do not prefix the command with `sudo`.
+
+**3. Get the kubeconfig**
+
+```sh
+k3sctl kubeconfig --config k3sctl.yaml > kubeconfig.yaml
+export KUBECONFIG="$PWD/kubeconfig.yaml"
+kubectl get nodes
+```
+
+**4. Tear down (when done)**
+
+```sh
+k3sctl reset --config k3sctl.yaml
+```
+
+***
+
+## Multi-node (SSH)
+
+A server node plus one or more agent (worker) nodes, connected over SSH.
+
+### Prerequisites
+
+* 2+ Linux hosts reachable over SSH
+* SSH key-based authentication configured
+* Root or passwordless `sudo` on each host
+
+### Steps
+
+**1. Generate the config**
+
+```sh
+k3sctl init \
+  --name staging \
+  --address 10.0.0.1 \
+  --user root \
+  --key-path ~/.ssh/id_ed25519 \
+  --agent \
+  --agent-address 10.0.0.2 \
+  > k3sctl.yaml
+```
+
+This generates a config with one server and one agent:
+
+```yaml
+apiVersion: k3sctl.k3sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: staging
+spec:
+  hosts:
+  - role: server
+    ssh:
+      address: 10.0.0.1
+      user: root
+      port: 22
+      keyPath: ~/.ssh/id_ed25519
+  - role: agent
+    ssh:
+      address: 10.0.0.2
+      user: root
+      port: 22
+      keyPath: ~/.ssh/id_ed25519
+  k3s:
+    version: ""
+```
+
+To add more agents, duplicate the agent block with different addresses:
+
+```yaml
+  - role: agent
+    ssh:
+      address: 10.0.0.3
+      user: root
+      port: 22
+      keyPath: ~/.ssh/id_ed25519
+```
+
+**2. (Optional) Edit the config**
+
+```sh
+$EDITOR k3sctl.yaml
+```
+
+Common changes:
+
+* Pin a K3s version: `version: "v1.31.0+k3s1"`
+* Disable traefik: add `installFlags: ["--disable=traefik"]` to the server
+* Add labels or taints to nodes
+
+**3. Validate the config**
+
+```sh
+k3sctl config validate --config k3sctl.yaml
+```
+
+**4. Apply the cluster**
+
+```sh
+k3sctl apply --config k3sctl.yaml
+```
+
+**5. Get the kubeconfig**
+
+```sh
+k3sctl kubeconfig --config k3sctl.yaml > kubeconfig.yaml
+export KUBECONFIG="$PWD/kubeconfig.yaml"
+kubectl get nodes
+```
+
+You should see both the server and agent nodes in `Ready` state.
+
+**6. Tear down (when done)**
+
+```sh
+k3sctl reset --config k3sctl.yaml
+```
+
+***
+
+## High availability (HA)
+
+Three or more server nodes with embedded etcd for fault tolerance. Agents
+are optional — server nodes can also run workloads.
+
+### Prerequisites
+
+* 3+ Linux hosts for servers (use an odd number for etcd quorum: 3, 5, …)
+* Optional additional hosts for agents
+* SSH key-based authentication to all hosts
+* Root or passwordless `sudo` on each host
+
+### Steps
+
+**1. Generate a starter config**
+
+```sh
+k3sctl init --name production --address 10.0.0.1 > k3sctl.yaml
+```
+
+**2. Edit the config for HA**
+
+Open `k3sctl.yaml` and add the additional server and agent hosts:
+
+```yaml
+apiVersion: k3sctl.k3sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: production
+spec:
+  hosts:
+  - role: server
+    ssh:
+      address: 10.0.0.1
+      user: root
+      port: 22
+      keyPath: ~/.ssh/id_ed25519
+    installFlags:
+      - --disable=traefik
+
+  - role: server
+    ssh:
+      address: 10.0.0.2
+      user: root
+      port: 22
+      keyPath: ~/.ssh/id_ed25519
+    installFlags:
+      - --disable=traefik
+
+  - role: server
+    ssh:
+      address: 10.0.0.3
+      user: root
+      port: 22
+      keyPath: ~/.ssh/id_ed25519
+    installFlags:
+      - --disable=traefik
+
+  - role: agent
+    ssh:
+      address: 10.0.0.11
+      user: root
+      port: 22
+      keyPath: ~/.ssh/id_ed25519
+
+  - role: agent
+    ssh:
+      address: 10.0.0.12
+      user: root
+      port: 22
+      keyPath: ~/.ssh/id_ed25519
+
+  k3s:
+    version: "v1.31.0+k3s1"
+
+    etcdSnapshots:
+      scheduled: true
+      scheduleCron: "0 */6 * * *"
+      retention: 5
+      compress: true
+
+    healthCheck:
+      enabled: true
+      timeout: 120s
+
+  options:
+    drain:
+      enabled: true
+      timeout: 5m
+```
+
+Key points for HA:
+
+* Use 3 or 5 server nodes (odd numbers maintain etcd quorum)
+* K3s automatically initializes embedded etcd when it sees multiple servers
+* `k3sctl` joins servers sequentially in quorum-safe batches
+* Enable `etcdSnapshots` for automated backups
+* Enable `healthCheck` to verify all nodes are ready after apply
+* Enable `drain` for safe rolling upgrades
+
+**3. Validate and preview**
+
+```sh
+k3sctl config validate --config k3sctl.yaml
+k3sctl apply --config k3sctl.yaml --dry-run
+```
+
+**4. Apply the cluster**
+
+```sh
+k3sctl apply --config k3sctl.yaml
+```
+
+`k3sctl` will:
+
+1. Connect to each host over SSH
+2. Install K3s on the first server and initialize etcd
+3. Join additional servers to the etcd cluster
+4. Join agent nodes to the cluster
+5. Run health checks to verify the cluster is ready
+
+**5. Get the kubeconfig**
+
+```sh
+k3sctl kubeconfig --config k3sctl.yaml > kubeconfig.yaml
+export KUBECONFIG="$PWD/kubeconfig.yaml"
+kubectl get nodes
+```
+
+All server and agent nodes should show `Ready`.
+
+**6. Day-two operations**
+
+Upgrade K3s by changing `version` and re-running apply — `k3sctl` performs
+a rolling upgrade with drain/cordon:
+
+```sh
+# Edit k3sctl.yaml and change the version
+k3sctl config diff --config k3sctl.yaml   # preview the changes
+k3sctl apply --config k3sctl.yaml         # rolling upgrade
+```
+
+Restore from an etcd snapshot if something goes wrong:
+
+```sh
+k3sctl restore --config k3sctl.yaml --from /var/lib/rancher/k3s/server/db/snapshots/etcd-snapshot-xxx
+```
+
+**7. Tear down (when done)**
+
+```sh
+k3sctl reset --config k3sctl.yaml
+```
+
+***
+
+## Next steps
+
+* [Configuration](./configuration.md): full reference for every option
+* [Commands](./commands.md): all CLI commands and flags
+* [Installation](./installation.md): other ways to install `k3sctl`

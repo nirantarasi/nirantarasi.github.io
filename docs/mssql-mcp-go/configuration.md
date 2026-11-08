@@ -113,7 +113,7 @@ Otherwise, use its full path.
         "-e", "SQLSERVER_USER=readonly_user",
         "-e", "SQLSERVER_PASSWORD=secret",
         "-e", "SQLSERVER_DATABASE=MyDatabase",
-        "ghcr.io/vinaycharlie01/mssql-mcp-go:latest"
+        "ghcr.io/nirantarasi/mssql-mcp-go:latest"
       ]
     }
   }

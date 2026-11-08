@@ -14,7 +14,7 @@ or more `OmniRoute` resources.
 From the OCI registry:
 
 ```sh
-helm install omniroute-operator oci://ghcr.io/vinaycharlie01/helm-charts/omniroute-operator \
+helm install omniroute-operator oci://ghcr.io/nirantarasi/helm-charts/omniroute-operator \
   --namespace omniroute-system --create-namespace
 ```
 
@@ -36,7 +36,7 @@ kubectl get pods -n omniroute-system
 | Value | Default | Description |
 |---|---|---|
 | `replicaCount` | `1` | Operator pod replicas |
-| `image.repository` | `ghcr.io/vinaycharlie01/omniroute-operator` | Operator image |
+| `image.repository` | `ghcr.io/nirantarasi/omniroute-operator` | Operator image |
 | `image.tag` | `""` (appVersion) | Operator image tag |
 | `leaderElection.enabled` | `true` | Enable leader election |
 | `resources.requests.cpu` | `10m` | CPU request |

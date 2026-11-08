@@ -41,3 +41,4 @@ Declarative Kubernetes lifecycle, read-only database MCP servers, and a Kubernet
 ### Other
 
 - [Documentation for coding agents](/agents.md): A compact map of Nirantara's documentation, plus the details that are easiest to get wrong when generating configuration for k3sctl, the MCP servers, or the omniroute-operator.
+- [Quick Start](/docs/k3sctl/quick-start.md): Step-by-step guides for single-node, multi-node, and high-availability K3s clusters with k3sctl.
